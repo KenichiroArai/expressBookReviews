@@ -6,8 +6,25 @@ const public_users = express.Router();
 
 
 public_users.post("/register", (req,res) => {
-  //Write your code here
-  return res.status(300).json({message: "Yet to be implemented"});
+    let result = null;
+
+    const { username, password } = req.body;
+
+    if (!username || !password) {
+        result = res.status(400).json({ message: "Username and password are required" });
+        return result;
+    }
+  
+    const userExists = users.some(user => user.username === username);
+    if (userExists) {
+        result = res.status(400).json({ message: "Username already exists" });
+        return result;
+    }
+  
+    users.push({ username, password });
+
+    result = res.status(201).json({ message: "User successfully registered" });
+    return result;
 });
 
 // Get the book list available in the shop
