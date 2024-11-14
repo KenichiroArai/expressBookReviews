@@ -6,6 +6,8 @@ const genl_routes = require('./router/general.js').general;
 
 const app = express();
 
+const secretKey = 'sample_secret_key';
+
 app.use(express.json());
 
 app.use("/customer",
@@ -16,23 +18,33 @@ app.use("/customer",
 
 app.use("/customer/auth/*",
     function auth(req, res, next) {
-        let result = "";
+        let token;
 
-        if (!req.session.authorization) {
-            result = res.status(403).json({ message: "User not logged in" });
-            return result;
+        // セッションからトークンを取得
+        if (req.session.authorization) {
+          token = req.session.authorization['accessToken'];
+        } else {
+          // ヘッダーからトークンを取得
+          const authHeader = req.headers['authorization'];
+          if (authHeader) {
+            // "Bearer "を削除してトークンを取得
+            token = authHeader.split(' ')[1];
+          }
         }
-        let token = req.session.authorization['accessToken'];
-
-        // Verify JWT token
-        jwt.verify(token, "access", (err, user) => {
-            if (!err) {
-                req.user = user;
-                next(); // Proceed to the next middleware
-            } else {
-                result = res.status(403).json({ message: "User not authenticated" });
-                return result;
-            }
+      
+        // トークンがない場合はエラーを返す
+        if (!token) {
+          return res.status(403).json({ message: "User not logged in" });
+        }
+      
+        // JWTトークンを検証
+        jwt.verify(token, secretKey, (err, user) => {
+          if (!err) {
+            req.user = user;
+            next(); // 次のミドルウェアへ
+          } else {
+            return res.status(403).json({ message: "User not authenticated" });
+          }
         });
     }
 );

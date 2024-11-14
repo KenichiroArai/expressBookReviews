@@ -36,6 +36,12 @@ regd_users.post("/login", (req,res) => {
     }
     
     const token = jwt.sign({ username }, secretKey, { expiresIn: '1h' });
+
+    // セッションにトークンを保存
+    req.session.authorization = {
+      accessToken: token
+    };
+  
     result = res.status(200).json({ message: "Login successful", token });
 
     return result;
@@ -43,40 +49,46 @@ regd_users.post("/login", (req,res) => {
 
 // Add a book review
 regd_users.put("/auth/review/:isbn", (req, res) => {
-    let result = null;
-
     const isbn = req.params.isbn;
     const review = req.query.review;
-    const token = req.headers['authorization'];
 
-    if (!token) {
-        result = res.status(401).json({ message: "Unauthorized access" });
-        return result;
+    const authHeader = req.headers['authorization'];
+
+    if (!authHeader) {
+        return res.status(401).json({ message: "Unauthorized access: No token provided" });
     }
+
+    // トークンから 'Bearer ' を取り除く
+    const tokenParts = authHeader.split(' ');
+    if (tokenParts.length !== 2 || tokenParts[0] !== 'Bearer') {
+        return res.status(401).json({ message: "Unauthorized access: Invalid token format" });
+    }
+
+    const token = tokenParts[1];
 
     // Verify the token and extract the username
     jwt.verify(token, secretKey, (err, decoded) => {
         if (err) {
-            result = res.status(403).json({ message: "Invalid token" });
-            return result;
+            return res.status(403).json({ message: "Invalid token", error: err.message });
         }
 
         const username = decoded.username;
 
         if (!books[isbn]) {
-            result = res.status(404).json({ message: "Book not found" });
-            return result;
+            return res.status(404).json({ message: "Book not found" });
         }
 
-        // Check if the user has already submitted a review
+        // レビューを追加または更新
         if (!books[isbn].reviews) {
             books[isbn].reviews = {};
         }
 
         books[isbn].reviews[username] = review;
 
-        result = res.status(200).json({ message: "Review added/updated successfully", reviews: books[isbn].reviews });
-        return result;
+        return res.status(200).json({
+            message: "Review added/updated successfully",
+            reviews: books[isbn].reviews
+        });
     });
 });
 
