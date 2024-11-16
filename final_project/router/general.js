@@ -27,11 +27,27 @@ public_users.post("/register", (req,res) => {
     return result;
 });
 
+function getBooks() {
+    return new Promise((resolve, reject) => {
+        if (books) {
+            resolve(books);
+        } else {
+            reject("Books data not found");
+        }
+    });
+}
+
 // Get the book list available in the shop
 public_users.get('/',
     function (req, res) {
-        let result = res.send(JSON.stringify(books, null, 4));
-        return result;
+        getBooks()
+            .then((books) => {
+            let result = res.send(JSON.stringify(books, null, 4));
+            return result;
+        })
+        .catch((error) => {
+            res.status(500).json({ message: error });
+        });
     }
 );
 
