@@ -42,22 +42,37 @@ public_users.get('/',
     function (req, res) {
         getBooks()
             .then((books) => {
-            let result = res.send(JSON.stringify(books, null, 4));
-            return result;
-        })
-        .catch((error) => {
-            res.status(500).json({ message: error });
-        });
+                let result = res.send(JSON.stringify(books, null, 4));
+                return result;
+            })
+            .catch((error) => {
+                res.status(500).json({ message: error });
+            });
     }
 );
 
 // Get book details based on ISBN
-public_users.get('/isbn/:isbn',function (req, res) {
-    let result = null;
-    const isbn = req.params.isbn;
-    result = res.send(books[isbn]);
+public_users.get('/isbn/:isbn',
+    function (req, res) {
+        let result = null;
+        const isbn = req.params.isbn;
+
+        getBooks()
+            .then((books) => {
+                const book = books[isbn];
+                if (!book) {
+                    result = res.status(404).json({ message: "Book not found" });
+                    return result;
+                }
+                result = res.send(book);
+                return result;
+            })
+            .catch((error) => {
+                result = res.status(500).json({ message: error });
+                return result;
+            });
  });
-  
+
 // Get book details based on author
 public_users.get('/author/:author', function (req, res) {
     let result = null;
