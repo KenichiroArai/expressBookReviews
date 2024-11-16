@@ -74,63 +74,71 @@ public_users.get('/isbn/:isbn',
  });
 
 // Get book details based on author
-public_users.get('/author/:author', function (req, res) {
-    let result = null;
+public_users.get('/author/:author',
+    function (req, res) {
+        let result = null;
 
-    const author = req.params.author;
+        const author = req.params.author;
 
-    getBooks()
-        .then((books) => {
-            const matchingBooks = [];
-            for (let i = 0; i < Object.keys(books).length; i++) {
-                const isbn = Object.keys(books)[i];
-                const book = books[isbn];
-                if (!book.author) {
-                    continue;
-                } else if (book.author !== author) {
-                    continue;
+        getBooks()
+            .then((books) => {
+                const matchingBooks = [];
+                for (let i = 0; i < Object.keys(books).length; i++) {
+                    const isbn = Object.keys(books)[i];
+                    const book = books[isbn];
+                    if (!book.author) {
+                        continue;
+                    } else if (book.author !== author) {
+                        continue;
+                    }
+                    matchingBooks.push(book);
                 }
-                matchingBooks.push(book);
-            }
 
-            if (matchingBooks.length <= 0) {
-                result = res.status(404).json({ message: "No books found for this author" });
+                if (matchingBooks.length <= 0) {
+                    result = res.status(404).json({ message: "No books found for this author" });
+                    return result;
+                }
+                result = res.send(matchingBooks);
                 return result;
-            }
-            result = res.send(matchingBooks);
-            return result;
-        })
-        .catch((error) => {
-            result = res.status(500).json({ message: error });
-            return result;
-        });
+            })
+            .catch((error) => {
+                result = res.status(500).json({ message: error });
+                return result;
+            });
 });
 
 // Get all books based on title
-public_users.get('/title/:title',function (req, res) {
-    let result = null;
+public_users.get('/title/:title',
+    function (req, res) {
+        let result = null;
 
-    const title = req.params.title;
-    const matchingBooks = [];
+        const title = req.params.title;
 
-    for (let i = 0; i < Object.keys(books).length; i++) {
-        const isbn = Object.keys(books)[i];
-        const book = books[isbn];
-        if (!book.title) {
-            continue;
-        }
-        if (book.title != title) {
-            continue;
-        }
-        matchingBooks.push(book);
-    }
+        getBooks()
+            .then((books) => {
+                const matchingBooks = [];
+                for (let i = 0; i < Object.keys(books).length; i++) {
+                    const isbn = Object.keys(books)[i];
+                    const book = books[isbn];
+                    if (!book.title) {
+                        continue;
+                    } else if (book.title !== title) {
+                        continue;
+                    }
+                    matchingBooks.push(book);
+                }
 
-    if (matchingBooks.length <= 0) {
-        res.status(404).json({ message: "No books found for this title" });
-        return result;
-    }
-    result = res.status(200).json(matchingBooks);
-    return result;
+                if (matchingBooks.length <= 0) {
+                    result = res.status(404).json({ message: "No books found for this title" });
+                    return result;
+                }
+                result = res.send(matchingBooks);
+                return result;
+            })
+            .catch((error) => {
+                result = res.status(500).json({ message: error });
+                return result;
+            });
 });
 
 //  Get book review
